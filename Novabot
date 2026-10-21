@@ -1,0 +1,43 @@
+import os
+import telebot
+from groq import Groq
+
+BOT_TOKEN = os.environ["BOT_TOKEN"]
+GROQ_API_KEY = os.environ["GROQ_API_KEY"]
+
+bot = telebot.TeleBot(BOT_TOKEN)
+ai = Groq(api_key=GROQ_API_KEY)
+
+@bot.message_handler(commands=["start"])
+def start(message):
+    bot.reply_to(
+        message,
+        "🖤 NOVABOT ishga tushdi!\n"
+        "Savolingizni yozing — yordam beraman. 🤖"
+    )
+
+@bot.message_handler(func=lambda message: True)
+def answer(message):
+    try:
+        response = ai.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Sen NOVABOT nomli o'zbekcha AI yordamchisan. "
+                        "Matematika va fizika masalalarini tushuntir, "
+                        "matnlarni tarjima qil va savollarga javob ber."
+                    )
+                },
+                {"role": "user", "content": message.text}
+            ]
+        )
+        bot.reply_to(message, response.choices[0].message.content)
+    except Exception:
+        bot.reply_to(
+            message,
+            "⚠️ Xatolik yuz berdi. Birozdan keyin qayta urinib ko'ring."
+        )
+
+bot.infinity_polling()
